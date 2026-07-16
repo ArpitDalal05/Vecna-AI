@@ -114,3 +114,20 @@ export interface AgentLog {
   payload?: Record<string, any>;
   timestamp: string;
 }
+
+export interface Mission {
+  id: string;
+  title: string;
+  goal: string;
+  description?: string;
+  priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  workspace: string;
+  executionMode: "Autonomous" | "Approval Required";
+  status: "CREATED" | "PLANNING" | "ASSIGNING" | "RUNNING" | "PAUSED" | "REVIEWING" | "COMPLETED" | "FAILED" | "CANCELLED";
+  createdAt: string;
+  updatedAt: string;
+  estimatedTasks: number;
+  completedTasks: number;
+  assignedAgents: string[];
+  owner?: string;
+}

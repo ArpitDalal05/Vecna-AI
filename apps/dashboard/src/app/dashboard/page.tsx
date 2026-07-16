@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useHiveState } from "../../hooks/useHiveState";
+import { useMission } from "../../hooks/useMission";
 
 const WebGLContainer = dynamic(() => import("../../components/dashboard/WebGLContainer"), {
   ssr: false,
@@ -379,6 +380,7 @@ export default function Dashboard() {
   } = useHiveState();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const { missions } = useMission();
   const [currentTime, setCurrentTime] = useState("");
   const [activeTab, setActiveTab] = useState("Overview");
 
@@ -422,6 +424,7 @@ export default function Dashboard() {
 
   const sidebarSection1 = [
     { label: "Overview", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3" },
+    { label: "Missions", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2", href: "/dashboard/mission" },
     { label: "Employees", icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857" },
     { label: "Departments", icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2" },
     { label: "Projects", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" },
@@ -951,17 +954,19 @@ export default function Dashboard() {
               </span>
             </div>
 
-            {/* Panel 6: Digital Organism */}
+            {/* Panel 6: AI Missions */}
             <div className="p-4 rounded-xl border border-zinc-900 bg-[#09070A]/30 flex flex-col justify-between min-h-[110px]">
               <span className="block font-mono text-[8px] tracking-wider text-zinc-500 uppercase">
-                DIGITAL ORGANISM
+                AI MISSIONS
               </span>
               <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-xl font-bold text-white tracking-tight">THRIVING</span>
-                <span className="text-[9px] text-zinc-500 font-mono">overall status</span>
+                <span className="text-xl font-bold text-white tracking-tight">
+                  {missions.filter((m: any) => m.status === "RUNNING").length} / {missions.length}
+                </span>
+                <span className="text-[9px] text-zinc-500 font-mono">active missions</span>
               </div>
-              <span className="block text-[8px] font-semibold text-green-500 uppercase tracking-widest mt-1">
-                ● ALL SYSTEMS OPERATIONAL
+              <span className="block text-[8px] font-semibold text-cyan uppercase tracking-widest mt-1">
+                ● {missions.filter((m: any) => m.status === "COMPLETED").length} COMPLETED
               </span>
             </div>
 

@@ -51,3 +51,14 @@ export interface ISettingsRepository {
   getActiveWorkspace(): Promise<RepoResponse<WorkspaceRow>>;
   setActiveWorkspace(id: string): Promise<{ error: Error | null }>;
 }
+
+export interface IMissionRepository {
+  createMission(mission: Omit<import("../types").Mission, "id" | "createdAt" | "updatedAt">): Promise<RepoResponse<import("../types").Mission>>;
+  updateMission(id: string, updates: Partial<import("../types").Mission>): Promise<RepoResponse<import("../types").Mission>>;
+  deleteMission(id: string): Promise<{ error: Error | null }>;
+  getMission(id: string): Promise<RepoResponse<import("../types").Mission>>;
+  getAllMissions(): Promise<RepoResponse<import("../types").Mission[]>>;
+  pauseMission(id: string): Promise<{ error: Error | null }>;
+  resumeMission(id: string): Promise<{ error: Error | null }>;
+  cancelMission(id: string): Promise<{ error: Error | null }>;
+}

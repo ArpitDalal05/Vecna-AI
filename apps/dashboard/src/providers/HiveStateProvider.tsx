@@ -1,7 +1,8 @@
 "use client";
 
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from "react";
-import { User, Assignment, Decision, Notification } from "../types";
+import { User, Assignment, Decision, Notification, Mission } from "../types";
+import { missionRepository } from "../repositories/missionRepository";
 import { systemRepository } from "../repositories/systemRepository";
 import { runtimeRepository } from "../repositories/runtimeRepository";
 import { agentRepository } from "../repositories/agentRepository";
@@ -47,6 +48,9 @@ export interface HiveStateContextType {
   clearNotifications: () => Promise<void>;
   changeWorkspace: (id: string) => Promise<void>;
   triggerSimulationTick: () => void;
+  missions: Mission[];
+  activeMission: Mission | null;
+  loadMissions: () => Promise<void>;
 }
 
 export const HiveStateContext = createContext<HiveStateContextType | undefined>(undefined);
@@ -65,6 +69,8 @@ export function HiveStateProvider({ children }: { children: ReactNode }) {
   const [workspaces, setWorkspaces] = useState<WorkspaceRow[]>([]);
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceRow | null>(null);
   const [analyticsHistory, setAnalyticsHistory] = useState<ChartDataPoint[]>([]);
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [activeMission, setActiveMission] = useState<Mission | null>(null);
 
   // Telemetry live logs buffer
   const [liveLogs, setLiveLogs] = useState<string[]>([]);
@@ -128,6 +134,14 @@ export function HiveStateProvider({ children }: { children: ReactNode }) {
       if (workspacesRes.data) setWorkspaces(workspacesRes.data);
       if (activeWorkspaceRes.data) setActiveWorkspace(activeWorkspaceRes.data);
       if (analyticsHistoryRes.data) setAnalyticsHistory(analyticsHistoryRes.data);
+      
+      // Load missions
+      const mRes = await missionRepository.getAllMissions();
+      if (mRes.data) {
+        setMissions(mRes.data);
+        const active = mRes.data.find(m => m.status === "RUNNING");
+        setActiveMission(active || null);
+      }
 
       const err = metricsRes.error || agentsRes.error || assignmentsRes.error || decisionsRes.error;
       if (err) {
@@ -159,6 +173,19 @@ export function HiveStateProvider({ children }: { children: ReactNode }) {
     await notificationRepository.clear();
     setNotifications([]);
   };
+
+  const loadMissions = useCallback(async () => {
+    try {
+      const res = await missionRepository.getAllMissions();
+      if (res.data) {
+        setMissions(res.data);
+        const active = res.data.find(m => m.status === "RUNNING");
+        setActiveMission(active || null);
+      }
+    } catch (err) {
+      console.error("Failed to load missions:", err);
+    }
+  }, []);
 
   const changeWorkspace = async (id: string) => {
     await settingsRepository.setActiveWorkspace(id);
@@ -308,7 +335,10 @@ export function HiveStateProvider({ children }: { children: ReactNode }) {
         markNotificationsRead,
         clearNotifications,
         changeWorkspace,
-        triggerSimulationTick
+        triggerSimulationTick,
+        missions,
+        activeMission,
+        loadMissions
       }}
     >
       {children}
