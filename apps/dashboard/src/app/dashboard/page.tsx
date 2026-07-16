@@ -2,8 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "../../lib/supabase/client";
 import dynamic from "next/dynamic";
+import { useHiveState } from "../../hooks/useHiveState";
 
 const WebGLContainer = dynamic(() => import("../../components/dashboard/WebGLContainer"), {
   ssr: false,
@@ -354,30 +354,29 @@ const TerrainMesh = () => {
 // --- CORE DASHBOARD COMPONENT ---
 export default function Dashboard() {
   const router = useRouter();
-  const supabase = createClient();
-
-  const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState("Hive Overlord");
-  const [userRole, setUserRole] = useState("Administrator");
+  const {
+    user,
+    onlineAgentCount,
+    latency,
+    activeThreads,
+    assignments,
+    decisions,
+    loading: stateLoading
+  } = useHiveState();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [currentTime, setCurrentTime] = useState("");
   const [activeTab, setActiveTab] = useState("Overview");
 
+  const userName = user?.fullName || "Hive Overlord";
+  const userRole = user?.designation || "Administrator";
+
   // Validate active auth session
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) {
-        router.push("/signin");
-      } else {
-        setUserName(user.user_metadata?.full_name || "Hive Overlord");
-        setUserRole(user.user_metadata?.designation || "Administrator");
-        setLoading(false);
-      }
-    };
-    checkSession();
-  }, [router]);
+    if (!stateLoading && !user) {
+      router.push("/signin");
+    }
+  }, [user, stateLoading, router]);
 
   // Update Telemetry Timer
   useEffect(() => {
@@ -394,9 +393,9 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) {
+  if (stateLoading || !user) {
     return (
-      <div className="min-h-screen bg-[#040404] flex items-center justify-center font-sans">
+      <div className="min-h-screen bg-[#050608] flex items-center justify-center font-sans">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 rounded-full border-2 border-violet/20 border-t-violet animate-spin"></div>
           <span className="text-[10px] tracking-[0.3em] text-zinc-500 uppercase font-semibold">
@@ -610,7 +609,7 @@ export default function Dashboard() {
                 
                 {/* Value display */}
                 <div className="flex items-center gap-4 mb-4">
-                  <span className="font-sans text-3xl font-extrabold text-white tracking-tight">98.7%</span>
+                  <span className="font-sans text-3xl font-extrabold text-white tracking-tight">{(100 - (latency / 12)).toFixed(1)}%</span>
                   <span className="text-[8px] font-mono text-green-500 tracking-wider uppercase border border-green-900/40 bg-green-950/20 px-2 py-0.5 rounded">
                     OPTIMAL
                   </span>
@@ -865,7 +864,7 @@ export default function Dashboard() {
                 NEURAL ACTIVITY
               </span>
               <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-xl font-bold text-white tracking-tight">7.38M</span>
+                <span className="text-xl font-bold text-white tracking-tight">{((activeThreads * 0.05) + 5.21).toFixed(2)}M</span>
                 <span className="text-[9px] text-zinc-500 font-mono">Signals/s</span>
               </div>
               <span className="block text-[8px] font-semibold text-crimson uppercase tracking-widest mt-1">
@@ -893,7 +892,7 @@ export default function Dashboard() {
                 MEMORY UTILIZATION
               </span>
               <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-xl font-bold text-white tracking-tight">87.6%</span>
+                <span className="text-xl font-bold text-white tracking-tight">{(85.4 + (activeThreads * 0.015)).toFixed(1)}%</span>
                 <span className="text-[9px] text-zinc-500 font-mono">total capacity</span>
               </div>
               <span className="block text-[8px] font-semibold text-cyan uppercase tracking-widest mt-1">
@@ -907,7 +906,7 @@ export default function Dashboard() {
                 TASK EVOLUTION
               </span>
               <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-xl font-bold text-white tracking-tight">2,847</span>
+                <span className="text-xl font-bold text-white tracking-tight">{2840 + assignments.length}</span>
                 <span className="text-[9px] text-zinc-500 font-mono">active workflows</span>
               </div>
               <span className="block text-[8px] font-semibold text-green-500 uppercase tracking-widest mt-1">
@@ -921,7 +920,7 @@ export default function Dashboard() {
                 INFRASTRUCTURE
               </span>
               <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-xl font-bold text-white tracking-tight">289</span>
+                <span className="text-xl font-bold text-white tracking-tight">{Math.floor(onlineAgentCount / 85)}</span>
                 <span className="text-[9px] text-zinc-500 font-mono">nodes online</span>
               </div>
               <span className="block text-[8px] font-semibold text-violet uppercase tracking-widest mt-1">
@@ -1023,35 +1022,35 @@ export default function Dashboard() {
                     <span className="w-1 h-1 rounded-full bg-crimson"></span>
                     Research & Discovery
                   </span>
-                  <span className="text-zinc-200">8,847 (32.6%)</span>
+                  <span className="text-zinc-200">{Math.floor(onlineAgentCount * 0.326).toLocaleString()} (32.6%)</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-zinc-900/50">
                   <span className="flex items-center gap-1.5">
                     <span className="w-1 h-1 rounded-full bg-violet"></span>
                     Data Intelligence
                   </span>
-                  <span className="text-zinc-200">6,472 (23.8%)</span>
+                  <span className="text-zinc-200">{Math.floor(onlineAgentCount * 0.238).toLocaleString()} (23.8%)</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-zinc-900/50">
                   <span className="flex items-center gap-1.5">
                     <span className="w-1 h-1 rounded-full bg-cyan"></span>
                     Creative Synthesis
                   </span>
-                  <span className="text-zinc-200">4,839 (17.9%)</span>
+                  <span className="text-zinc-200">{Math.floor(onlineAgentCount * 0.179).toLocaleString()} (17.9%)</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-zinc-900/50">
                   <span className="flex items-center gap-1.5">
                     <span className="w-1 h-1 rounded-full bg-violet"></span>
                     Strategic Planning
                   </span>
-                  <span className="text-zinc-200">3,721 (13.7%)</span>
+                  <span className="text-zinc-200">{Math.floor(onlineAgentCount * 0.137).toLocaleString()} (13.7%)</span>
                 </div>
                 <div className="flex justify-between py-1.5">
                   <span className="flex items-center gap-1.5">
                     <span className="w-1 h-1 rounded-full bg-green-500"></span>
                     System Optimization
                   </span>
-                  <span className="text-zinc-200">2,996 (12.0%)</span>
+                  <span className="text-zinc-200">{Math.floor(onlineAgentCount * 0.120).toLocaleString()} (12.0%)</span>
                 </div>
               </div>
 

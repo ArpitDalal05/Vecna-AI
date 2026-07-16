@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "../../lib/supabase/client";
+import { useHiveState } from "../../hooks/useHiveState";
+import { ApiClient } from "../../services/api/apiClient";
 
 export default function Profile() {
   const router = useRouter();
-  const supabase = createClient();
+  const { setUser: setGlobalUser } = useHiveState();
 
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -26,16 +27,16 @@ export default function Profile() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const { data: { user }, error } = await supabase.auth.getUser();
+        const activeUser = await ApiClient.auth.getUser();
 
-        if (error || !user) {
+        if (!activeUser) {
           router.push("/signin");
         } else {
-          setUser(user);
-          setFullName(user.user_metadata?.full_name || "");
-          setDesignation(user.user_metadata?.designation || "Core Cognitive Unit");
-          setNodeId(user.user_metadata?.node_id || Math.floor(Math.random() * 899999 + 100000).toString());
-          setSyncRank(user.user_metadata?.sync_rank || "Initiate (L1)");
+          setUser(activeUser);
+          setFullName(activeUser.fullName || "");
+          setDesignation(activeUser.designation || "Core Cognitive Unit");
+          setNodeId(Math.floor(Math.random() * 899999 + 100000).toString());
+          setSyncRank("Initiate (L1)");
         }
       } catch (err) {
         console.error("Error checking session", err);
@@ -55,21 +56,14 @@ export default function Profile() {
     setErrorMessage(null);
 
     try {
-      const { data, error } = await supabase.auth.updateUser({
-        data: {
-          full_name: fullName,
-          designation: designation,
-        },
-      });
-
-      if (error) {
-        setErrorMessage(error.message);
-      } else {
-        setSuccessMessage("Identity parameters updated successfully.");
-        setUser(data.user);
-      }
-    } catch (err) {
-      setErrorMessage("Could not update profile metadata. Please try again.");
+      await ApiClient.auth.updateProfile(fullName, designation);
+      const updatedUser = await ApiClient.auth.getUser();
+      
+      setSuccessMessage("Identity parameters updated successfully.");
+      setGlobalUser(updatedUser);
+      setUser(updatedUser);
+    } catch (err: any) {
+      setErrorMessage(err.message || "Could not update profile metadata. Please try again.");
     } finally {
       setUpdating(false);
     }
@@ -78,7 +72,8 @@ export default function Profile() {
   const handleSignOut = async () => {
     setLoading(true);
     try {
-      await supabase.auth.signOut();
+      await ApiClient.auth.signOut();
+      setGlobalUser(null);
       router.push("/signin");
       router.refresh();
     } catch (err) {
@@ -89,7 +84,7 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#040404] flex items-center justify-center font-sans">
+      <div className="min-h-screen bg-[#050608] flex items-center justify-center font-sans">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 rounded-full border-2 border-violet/20 border-t-violet animate-spin"></div>
           <span className="text-[10px] tracking-[0.3em] text-zinc-500 uppercase font-semibold">
@@ -100,11 +95,11 @@ export default function Profile() {
     );
   }
 
-  const createdTime = user?.created_at 
-    ? new Date(user.created_at).toLocaleString() 
+  const createdTime = user?.createdAt || user?.created_at
+    ? new Date(user.createdAt || user.created_at).toLocaleString() 
     : "Initializing...";
-  const lastSignIn = user?.last_sign_in_at 
-    ? new Date(user.last_sign_in_at).toLocaleString() 
+  const lastSignIn = user?.lastSignIn || user?.last_sign_in_at 
+    ? new Date(user.lastSignIn || user.last_sign_in_at).toLocaleString() 
     : new Date().toLocaleString();
 
   return (

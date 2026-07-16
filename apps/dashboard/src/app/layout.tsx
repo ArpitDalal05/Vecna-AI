@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import HiveStateProvider from "../providers/HiveStateProvider";
+import ErrorBoundary from "../components/ErrorBoundary";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -20,10 +22,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} h-full antialiased bg-[#040404]`}
+      className={`${inter.variable} h-full antialiased bg-[#050608]`}
     >
-      <body className="min-h-full flex flex-col bg-[#040404] text-zinc-100 overflow-x-hidden">
-        {children}
+      <body className="min-h-full flex flex-col bg-[#050608] text-zinc-100 overflow-x-hidden">
+        <ErrorBoundary>
+          <HiveStateProvider>
+            {children}
+          </HiveStateProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
