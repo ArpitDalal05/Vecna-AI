@@ -1,0 +1,18 @@
+{
+  "name": "Vecna-AI",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vecna-AI Autonomous Engineering Organization Platform",
+  "type": "module",
+  "packageManager": "pnpm@11.13.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.5",
+    "typescript": "^5.8.0"
+  }
+}
