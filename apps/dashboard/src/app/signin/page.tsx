@@ -34,7 +34,7 @@ function SignInContent() {
       if (error) {
         setErrorMessage(error.message);
       } else {
-        router.push("/profile");
+        router.push("/dashboard");
         router.refresh();
       }
     } catch (err: any) {

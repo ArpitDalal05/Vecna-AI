@@ -42,7 +42,7 @@ export default function SignUp() {
         // If Supabase is configured with email confirmation, we display instructions.
         // Otherwise, if the session is immediately active, we can route.
         if (data.session) {
-          router.push("/profile");
+          router.push("/dashboard");
           router.refresh();
         } else {
           setSuccess(true);
