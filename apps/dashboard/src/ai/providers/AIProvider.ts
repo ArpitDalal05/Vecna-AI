@@ -1,10 +1,3 @@
-# AI Provider Interface
-
-Defines the core `AIProvider` contract for model communications.
-
-## Interface Signature
-
-```typescript
 export interface GenerateOptions {
   model?: string;
   temperature?: number;
@@ -22,6 +15,10 @@ export interface LLMResponse {
 
 export interface AIProvider {
   generate(prompt: string, systemPrompt?: string, options?: GenerateOptions): Promise<LLMResponse>;
-  stream(prompt: string, systemPrompt: string | undefined, onChunk: (text: string) => void, options?: GenerateOptions): Promise<LLMResponse>;
+  stream(
+    prompt: string,
+    systemPrompt: string | undefined,
+    onChunk: (text: string) => void,
+    options?: GenerateOptions
+  ): Promise<LLMResponse>;
 }
-```

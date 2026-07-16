@@ -1,5 +1,5 @@
 import { Mission, Assignment } from "../../types";
-import { planner } from "./planner";
+import { plannerRunner } from "../../ai/orchestrator/plannerRunner";
 import { insertAssignmentTable } from "../../mock/runtime";
 import { createClient } from "../../lib/supabase/client";
 import { FEATURE_FLAGS } from "../../config";
@@ -8,7 +8,7 @@ import { eventBus } from "../runtime/eventBus";
 
 export const missionExecutor = {
   async execute(mission: Mission): Promise<void> {
-    const tasks = planner.decompose(mission.goal, mission.priority);
+    const tasks = await plannerRunner.decompose(mission.goal, mission.priority);
     
     if (FEATURE_FLAGS.USE_MOCK_DATA) {
       for (const t of tasks) {
