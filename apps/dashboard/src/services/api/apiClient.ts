@@ -1,6 +1,8 @@
 import { createClient } from "../../lib/supabase/client";
-import { hiveSimulation } from "../runtime/engines";
 import { User, Assignment, Decision, HiveEvent, Employee, Department } from "../../types";
+import { systemMetricsTable } from "../../mock/system";
+import { assignmentsTable } from "../../mock/runtime";
+import { employeesTable, departmentsTable, decisionsTable } from "../../mock/organization";
 
 const supabase = createClient();
 
@@ -36,13 +38,22 @@ export const ApiClient = {
 
   dashboard: {
     getMetrics() {
-      return hiveSimulation.getMetrics();
+      const latency = systemMetricsTable.find(r => r.id === "latency")?.value || 24;
+      const cpu = systemMetricsTable.find(r => r.id === "cpu_usage")?.value || 42;
+      return {
+        onlineAgentCount: 24875,
+        latency,
+        activeThreads: Math.floor(cpu * 1.4) + 40,
+        assignments: assignmentsTable,
+        decisions: decisionsTable,
+        liveLogs: []
+      };
     }
   },
 
   runtime: {
     getAssignments(): Assignment[] {
-      return hiveSimulation.getMetrics().assignments;
+      return assignmentsTable;
     }
   },
 
@@ -99,7 +110,7 @@ export const ApiClient = {
 
   decisions: {
     getProposedDecisions(): Decision[] {
-      return hiveSimulation.getMetrics().decisions;
+      return decisionsTable;
     }
   }
 };

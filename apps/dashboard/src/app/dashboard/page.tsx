@@ -12,6 +12,7 @@ const WebGLContainer = dynamic(() => import("../../components/dashboard/WebGLCon
 // --- CUSTOM HEARTBEAT GRAPH COMPONENT ---
 const HeartbeatGraph = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { latency } = useHiveState();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -54,16 +55,18 @@ const HeartbeatGraph = () => {
       points.shift();
       const lastVal = points[points.length - 1];
       let newVal = height / 2;
+      
+      const contractionChance = Math.max(0.02, Math.min(0.15, latency / 200));
       const r = Math.random();
-      if (r < 0.05) {
+      if (r < contractionChance / 2) {
         // High peak
-        newVal = height / 4;
-      } else if (r < 0.1) {
+        newVal = height / 5;
+      } else if (r < contractionChance) {
         // Low peak
-        newVal = (3 * height) / 4;
+        newVal = (4 * height) / 5;
       } else {
         // Stabilization
-        newVal = lastVal + (height / 2 - lastVal) * 0.2 + (Math.random() - 0.5) * 4;
+        newVal = lastVal + (height / 2 - lastVal) * 0.25 + (Math.random() - 0.5) * 3;
       }
       points.push(newVal);
 
@@ -264,6 +267,7 @@ const NeuralCore = () => {
 // --- CUSTOM 3D TERRAIN MESH COMPONENT ---
 const TerrainMesh = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { cpuUsage } = useHiveState();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -293,7 +297,9 @@ const TerrainMesh = () => {
       const cellW = width / (cols - 1);
       const cellH = height / (rows - 1);
 
-      const time = Date.now() * 0.002;
+      const amp = (cpuUsage / 42.8) * 11;
+      const speed = 0.0025 * (cpuUsage / 42.8);
+      const time = Date.now() * speed;
 
       // Calculate z projection coordinates
       const points: { x: number; y: number }[][] = [];
@@ -304,8 +310,8 @@ const TerrainMesh = () => {
           const ny = r / (rows - 1);
 
           // Dynamic offset heights
-          const wave1 = Math.sin(nx * 5 + time) * 12;
-          const wave2 = Math.cos(ny * 4 - time) * 8;
+          const wave1 = Math.sin(nx * 5 + time) * amp;
+          const wave2 = Math.cos(ny * 4 - time) * (amp * 0.7);
           const zOffset = wave1 + wave2;
 
           // Projection calculation
@@ -358,10 +364,18 @@ export default function Dashboard() {
     user,
     onlineAgentCount,
     latency,
+    cpuUsage,
+    memoryUsage,
+    bandwidth,
     activeThreads,
     assignments,
     decisions,
-    loading: stateLoading
+    loading: stateLoading,
+    activeWorkspace,
+    workspaces,
+    changeWorkspace,
+    markNotificationsRead,
+    unreadCount
   } = useHiveState();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -426,6 +440,10 @@ export default function Dashboard() {
   const handleSidebarClick = (link: { label: string; href?: string }) => {
     if (link.href) {
       router.push(link.href);
+    } else if (link.label === "Workspace") {
+      const currentIndex = workspaces.findIndex(w => w.id === activeWorkspace?.id);
+      const nextIndex = (currentIndex + 1) % workspaces.length;
+      changeWorkspace(workspaces[nextIndex].id);
     } else {
       setActiveTab(link.label);
     }
@@ -470,12 +488,15 @@ export default function Dashboard() {
           </button>
 
           {/* Notifications button */}
-          <button className="w-8 h-8 rounded-lg border border-zinc-850 bg-zinc-950/40 flex items-center justify-center text-zinc-455 hover:text-purple hover:border-purple/40 relative transition-all">
+          <button 
+            onClick={markNotificationsRead}
+            className="w-8 h-8 rounded-lg border border-zinc-855 bg-zinc-950/40 flex items-center justify-center text-zinc-455 hover:text-purple hover:border-purple/40 relative transition-all"
+          >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v1.341C7.67 7.165 7 8.388 7 11" />
             </svg>
             <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-crimson text-[7px] font-bold text-white flex items-center justify-center">
-              12
+              {unreadCount}
             </span>
           </button>
 
@@ -511,7 +532,9 @@ export default function Dashboard() {
               <path d="M35 15L50 5L65 15" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <div className="flex flex-col">
-              <span className="text-xs font-bold tracking-[0.25em] text-white uppercase">VECNA AI</span>
+              <span className="text-xs font-bold tracking-[0.25em] text-white uppercase truncate max-w-[130px]">
+                {activeWorkspace?.name || "VECNA AI"}
+              </span>
               <span className="text-[7.5px] font-mono tracking-[0.2em] text-zinc-500 uppercase mt-0.5">HIVE MIND OS</span>
             </div>
           </div>
@@ -628,23 +651,23 @@ export default function Dashboard() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Neural Network</span>
-                    <span className="text-zinc-300">98.3%</span>
+                    <span className="text-zinc-300">{(100 - (cpuUsage / 25)).toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Knowledge Base</span>
-                    <span className="text-zinc-300">97.9%</span>
+                    <span className="text-zinc-300">{(97.0 + (bandwidth * 0.05)).toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Memory Core</span>
-                    <span className="text-green-500 font-semibold">98.8%</span>
+                    <span className="text-green-500 font-semibold">{(100 - (memoryUsage * 0.015)).toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Agent Network</span>
-                    <span className="text-zinc-300">99.1%</span>
+                    <span className="text-zinc-300">{(99.5 - (latency * 0.02)).toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Infrastructure</span>
-                    <span className="text-zinc-400">97.2%</span>
+                    <span className="text-zinc-400">{(98.5 - (cpuUsage * 0.012)).toFixed(1)}%</span>
                   </div>
                 </div>
               </div>
@@ -745,7 +768,7 @@ export default function Dashboard() {
               <div className="flex justify-between items-end w-full mt-auto z-10">
                 <div className="flex flex-col gap-1 text-left">
                   <span className="font-mono text-[8px] tracking-widest text-zinc-500 uppercase">SYNCHRONIZATION</span>
-                  <span className="font-sans text-sm font-bold text-white tracking-tight">98.7%</span>
+                  <span className="font-sans text-sm font-bold text-white tracking-tight">{(100 - (latency / 12)).toFixed(1)}%</span>
                 </div>
                 <div className="flex flex-col gap-1 text-right">
                   <span className="font-mono text-[8px] tracking-widest text-zinc-500 uppercase">GLOBAL HARMONY</span>
@@ -787,19 +810,19 @@ export default function Dashboard() {
                 <div className="space-y-2 mt-4 pt-3 border-t border-zinc-900/60 text-[9px] font-mono">
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Knowledge Expansion</span>
-                    <span className="text-cyan font-semibold">+2.45 TB/day</span>
+                    <span className="text-cyan font-semibold">+{((onlineAgentCount * 0.0001) + 0.02).toFixed(2)} TB/day</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Learning Rate</span>
-                    <span className="text-zinc-200">1,247 ops/s</span>
+                    <span className="text-zinc-200">{(activeThreads * 8.5).toFixed(0)} ops/s</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Swarm Efficiency</span>
-                    <span className="text-violet font-semibold">96.3%</span>
+                    <span className="text-violet font-semibold">{(100 - (cpuUsage * 0.08)).toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Decision Confidence</span>
-                    <span className="text-green-500 font-semibold">99.2%</span>
+                    <span className="text-green-500 font-semibold">{(100 - (latency * 0.03)).toFixed(1)}%</span>
                   </div>
                 </div>
               </div>
@@ -825,28 +848,28 @@ export default function Dashboard() {
                       <span className="w-1.5 h-1.5 rounded-full bg-violet"></span>
                       Problem Solving
                     </span>
-                    <span className="text-zinc-200">35.6%</span>
+                    <span className="text-zinc-200">{(cpuUsage * 0.4 + 18.5).toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-1.5 text-zinc-500">
                       <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
                       Data Analysis
                     </span>
-                    <span className="text-zinc-200">28.4%</span>
+                    <span className="text-zinc-200">{(memoryUsage * 0.3 + 2.8).toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-1.5 text-zinc-500">
                       <span className="w-1.5 h-1.5 rounded-full bg-crimson"></span>
                       Hypothesis Testing
                     </span>
-                    <span className="text-zinc-200">18.7%</span>
+                    <span className="text-zinc-200">{(latency * 0.2 + 13.9).toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-1.5 text-zinc-500">
                       <span className="w-1.5 h-1.5 rounded-full bg-cyan"></span>
                       Knowledge Mining
                     </span>
-                    <span className="text-zinc-200">17.3%</span>
+                    <span className="text-zinc-200">{(100 - (cpuUsage * 0.4 + 18.5 + memoryUsage * 0.3 + 2.8 + latency * 0.2 + 13.9)).toFixed(1)}%</span>
                   </div>
                 </div>
               </div>
@@ -996,10 +1019,10 @@ export default function Dashboard() {
 
                 {/* Sidebar statistics of the map */}
                 <div className="absolute right-4 bottom-4 bg-[#09070A]/95 border border-zinc-800/80 px-3 py-2 rounded-lg font-mono text-[8px] text-zinc-500 space-y-1">
-                  <div>DATA FLOW: <span className="text-white">2.78 PB/s</span></div>
-                  <div>COMMUNICATIONS: <span className="text-white">1.24M msg/s</span></div>
-                  <div>ACTIVE CONNECTIONS: <span className="text-white">98.3M</span></div>
-                  <div>GLOBAL COVERAGE: <span className="text-cyan font-bold">99.97%</span></div>
+                  <div>DATA FLOW: <span className="text-white">{bandwidth.toFixed(2)} PB/s</span></div>
+                  <div>COMMUNICATIONS: <span className="text-white">{(bandwidth * 0.45).toFixed(2)}M msg/s</span></div>
+                  <div>ACTIVE CONNECTIONS: <span className="text-white">{(onlineAgentCount * 0.00395).toFixed(1)}M</span></div>
+                  <div>GLOBAL COVERAGE: <span className="text-cyan font-bold">{(99.9 + (bandwidth * 0.01)).toFixed(2)}%</span></div>
                 </div>
               </div>
             </div>

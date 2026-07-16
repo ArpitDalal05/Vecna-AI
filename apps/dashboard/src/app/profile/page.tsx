@@ -7,7 +7,7 @@ import { ApiClient } from "../../services/api/apiClient";
 
 export default function Profile() {
   const router = useRouter();
-  const { setUser: setGlobalUser } = useHiveState();
+  const { updateProfile } = useHiveState();
 
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -56,11 +56,10 @@ export default function Profile() {
     setErrorMessage(null);
 
     try {
-      await ApiClient.auth.updateProfile(fullName, designation);
+      await updateProfile({ fullName, designation });
       const updatedUser = await ApiClient.auth.getUser();
       
       setSuccessMessage("Identity parameters updated successfully.");
-      setGlobalUser(updatedUser);
       setUser(updatedUser);
     } catch (err: any) {
       setErrorMessage(err.message || "Could not update profile metadata. Please try again.");
@@ -73,7 +72,6 @@ export default function Profile() {
     setLoading(true);
     try {
       await ApiClient.auth.signOut();
-      setGlobalUser(null);
       router.push("/signin");
       router.refresh();
     } catch (err) {

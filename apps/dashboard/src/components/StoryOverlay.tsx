@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { eventBus } from "../services/runtime/eventBus";
 
 interface StoryOverlayProps {
   scrollProgress: number;
@@ -18,32 +19,32 @@ export default function StoryOverlay({ scrollProgress }: StoryOverlayProps) {
   ]);
 
   useEffect(() => {
-    // Only generate logs when Stage 3 is active
-    if (scrollProgress >= 0.42 && scrollProgress <= 0.68) {
-      const interval = setInterval(() => {
-        const operations = [
-          "Syncing Node_0",
-          "Optimizing logical path on district ",
-          "Grid consensus achieved: ",
-          "Encrypting neural corridor ",
-          "Cognitive thread spawned: ",
-          "Workspace query processed: ",
-          "Consensus signature verified: "
-        ];
-        const status = ["OK", "1.15ms", "DONE", "SECURE", "SYNCHRONIZED", "ACTIVE"];
-        const randId = Math.floor(Math.random() * 899 + 100);
-        const randOp = operations[Math.floor(Math.random() * operations.length)];
-        const randStat = status[Math.floor(Math.random() * status.length)];
-        
-        const timestamp = new Date().toLocaleTimeString();
-        const nextLog = `[SYS // ${timestamp}] ${randOp}${randId}... ${randStat}`;
-        
-        setLogs((prev) => [...prev.slice(1), nextLog]);
-      }, 1600);
+    const handleDataChanged = () => {
+      const operations = [
+        "Syncing Node_0",
+        "Optimizing logical path on district ",
+        "Grid consensus achieved: ",
+        "Encrypting neural corridor ",
+        "Cognitive thread spawned: ",
+        "Workspace query processed: ",
+        "Consensus signature verified: "
+      ];
+      const status = ["OK", "1.15ms", "DONE", "SECURE", "SYNCHRONIZED", "ACTIVE"];
+      const randId = Math.floor(Math.random() * 899 + 100);
+      const randOp = operations[Math.floor(Math.random() * operations.length)];
+      const randStat = status[Math.floor(Math.random() * status.length)];
+      
+      const timestamp = new Date().toLocaleTimeString();
+      const nextLog = `[SYS // ${timestamp}] ${randOp}${randId}... ${randStat}`;
+      
+      setLogs((prev) => [...prev.slice(1), nextLog]);
+    };
 
-      return () => clearInterval(interval);
-    }
-  }, [scrollProgress]);
+    const unsubscribe = eventBus.on("DATA_CHANGED", handleDataChanged);
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // Helper to calculate exact entry/exit animations for sections based on progress
   const getSectionStyles = (
