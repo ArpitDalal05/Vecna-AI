@@ -18,6 +18,9 @@ import { NotificationRow } from "../mock/notifications";
 import { ProfileRow } from "../mock/profile";
 import { WorkspaceRow } from "../mock/workspace";
 import { ChartDataPoint } from "../mock/analytics";
+import { FEATURE_FLAGS } from "../config";
+import { createClient } from "../lib/supabase/client";
+import { cacheManager } from "../services/cache/cacheManager";
 
 export interface HiveStateContextType {
   user: User | null;
@@ -223,6 +226,54 @@ export function HiveStateProvider({ children }: { children: ReactNode }) {
       unsubscribe();
     };
   }, [loadData]);
+
+  // 3. Setup Supabase Realtime subscriptions if USE_MOCK_DATA is false
+  useEffect(() => {
+    if (FEATURE_FLAGS.USE_MOCK_DATA) return;
+
+    const supabase = createClient();
+    
+    const channel = supabase
+      .channel("supabase_realtime_changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "runtime_metrics" },
+        () => {
+          cacheManager.invalidate("system_metrics");
+          cacheManager.invalidate("system_health");
+          eventBus.emit("DATA_CHANGED");
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notifications" },
+        () => {
+          cacheManager.invalidate("notifications_list");
+          eventBus.emit("DATA_CHANGED");
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "agents" },
+        () => {
+          cacheManager.invalidate("agents_list");
+          eventBus.emit("DATA_CHANGED");
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "assignments" },
+        () => {
+          cacheManager.invalidate("runtime_assignments");
+          eventBus.emit("DATA_CHANGED");
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   return (
     <HiveStateContext.Provider

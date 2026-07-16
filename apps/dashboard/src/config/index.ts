@@ -31,6 +31,7 @@ export const FEATURE_FLAGS = {
   ENABLE_GPU_PARTICLES: true,
   ENABLE_DECISION_DEBATE: true,
   ENABLE_REALTIME_NOTIFICATIONS: true,
+  USE_MOCK_DATA: process.env.NEXT_PUBLIC_USE_MOCK_DATA !== "false", // default to true (mock), set to false for Supabase!
 } as const;
 
 export const CONSTANTS = {
