@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useHiveState } from "../../hooks/useHiveState";
 import { useMission } from "../../hooks/useMission";
+import AISettingsPanel from "../../components/dashboard/AISettingsPanel";
 
 const WebGLContainer = dynamic(() => import("../../components/dashboard/WebGLContainer"), {
   ssr: false,
@@ -617,9 +618,12 @@ export default function Dashboard() {
 
         {/* ==================== SCROLLABLE WORKSPACE GRID ==================== */}
         <main className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 bg-[#040404]">
-          
-          {/* ROW 1: PRIMARY GRID */}
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+          {activeTab === "Settings" ? (
+            <AISettingsPanel />
+          ) : (
+            <>
+              {/* ROW 1: PRIMARY GRID */}
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
             
             {/* Column 1: Overall Health & Agent Map (1 Column Width) */}
             <div className="xl:col-span-1 flex flex-col gap-8">
@@ -1093,6 +1097,8 @@ export default function Dashboard() {
 
           </div>
 
+            </>
+          )}
         </main>
 
       </div>

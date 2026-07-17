@@ -2,6 +2,8 @@ export interface Message {
   role: "system" | "user" | "assistant" | "agent";
   content: string;
   senderId?: string;
+  missionId?: string;
+  agentId?: string;
   timestamp: string;
 }
 
@@ -13,11 +15,19 @@ export class ConversationManager {
     if (maxTokens) this.maxTokens = maxTokens;
   }
 
-  addMessage(role: "system" | "user" | "assistant" | "agent", content: string, senderId?: string) {
+  addMessage(
+    role: "system" | "user" | "assistant" | "agent",
+    content: string,
+    senderId?: string,
+    missionId?: string,
+    agentId?: string
+  ) {
     this.history.push({
       role,
       content,
       senderId,
+      missionId,
+      agentId,
       timestamp: new Date().toISOString()
     });
     this.trimContext();
@@ -25,6 +35,14 @@ export class ConversationManager {
 
   getHistory(): Message[] {
     return [...this.history];
+  }
+
+  getHistoryByMission(missionId: string): Message[] {
+    return this.history.filter(m => m.missionId === missionId);
+  }
+
+  getHistoryByAgent(agentId: string): Message[] {
+    return this.history.filter(m => m.agentId === agentId);
   }
 
   clear() {

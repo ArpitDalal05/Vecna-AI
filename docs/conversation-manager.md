@@ -1,6 +1,3 @@
-# Conversation Manager
+# Conversation Manager Specification
 
-Maintains conversation history queues. Trims oldest messages first to stay within token thresholds.
-
-* Context size: Default is 8000 tokens.
-* Preparation: Pre-configured hooks for semantic similarity checks.
+Tracks sliding context history queues by agent and mission tags to preserve memory chains.

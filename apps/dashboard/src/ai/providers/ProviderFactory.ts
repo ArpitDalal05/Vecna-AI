@@ -3,30 +3,29 @@ import { OpenAIProvider } from "./openai";
 import { AnthropicProvider } from "./anthropic";
 import { GeminiProvider } from "./gemini";
 import { OllamaProvider } from "./ollama";
-import { OpenRouterProvider } from "./openrouter";
+import { OpenRouterProvider } from "./openrouterProvider";
+import { aiConfigManager } from "../aiConfig";
 
 export class ProviderFactory {
   static getProvider(): AIProvider | null {
-    const openaiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
-    const anthropicKey = process.env.ANTHROPIC_API_KEY || process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY;
-    const geminiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    const openrouterKey = process.env.OPENROUTER_API_KEY || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
-    const ollamaUrl = process.env.OLLAMA_BASE_URL || process.env.NEXT_PUBLIC_OLLAMA_BASE_URL;
+    const config = aiConfigManager.getConfig();
 
-    if (openaiKey) {
-      return new OpenAIProvider(openaiKey);
+    if (!config.useRealAi) {
+      return null;
     }
-    if (geminiKey) {
-      return new GeminiProvider(geminiKey);
+
+    if (config.openrouterApiKey) {
+      return new OpenRouterProvider(config.openrouterApiKey, config.openrouterBaseUrl);
     }
-    if (anthropicKey) {
-      return new AnthropicProvider(anthropicKey);
-    }
+
+    const openrouterKey = process.env.OPENROUTER_API_KEY || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
     if (openrouterKey) {
       return new OpenRouterProvider(openrouterKey);
     }
-    if (ollamaUrl) {
-      return new OllamaProvider(ollamaUrl);
+
+    const geminiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || config.geminiApiKey;
+    if (geminiKey) {
+      return new GeminiProvider(geminiKey);
     }
 
     return null;

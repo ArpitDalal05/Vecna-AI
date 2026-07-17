@@ -1,5 +1,3 @@
 # Streaming Specification
 
-Outlines streamed LLM text buffers and Event Bus integrations.
-
-* Triggers: Streamed chunks invoke event-driven reactive state refreshes.
+Tracks token chunk streams from OpenRouter endpoints to power reactive event updates in the UI.

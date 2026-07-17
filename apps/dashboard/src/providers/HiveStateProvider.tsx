@@ -51,6 +51,14 @@ export interface HiveStateContextType {
   missions: Mission[];
   activeMission: Mission | null;
   loadMissions: () => Promise<void>;
+  currentProvider: string;
+  currentModel: string;
+  activeRequests: number;
+  queueSize: number;
+  streamingStatus: string;
+  tokenUsage: number;
+  estimatedCost: number;
+  providerHealth: string;
 }
 
 export const HiveStateContext = createContext<HiveStateContextType | undefined>(undefined);
@@ -71,6 +79,15 @@ export function HiveStateProvider({ children }: { children: ReactNode }) {
   const [analyticsHistory, setAnalyticsHistory] = useState<ChartDataPoint[]>([]);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [activeMission, setActiveMission] = useState<Mission | null>(null);
+  
+  const [currentProvider, setCurrentProvider] = useState("OpenRouter");
+  const [currentModel, setCurrentModel] = useState("qwen/qwen3-coder-480b-a35b-instruct");
+  const [activeRequests, setActiveRequests] = useState(0);
+  const [queueSize, setQueueSize] = useState(0);
+  const [streamingStatus, setStreamingStatus] = useState("Idle");
+  const [tokenUsage, setTokenUsage] = useState(0);
+  const [estimatedCost, setEstimatedCost] = useState(0);
+  const [providerHealth, setProviderHealth] = useState("Healthy");
 
   // Telemetry live logs buffer
   const [liveLogs, setLiveLogs] = useState<string[]>([]);
@@ -338,7 +355,15 @@ export function HiveStateProvider({ children }: { children: ReactNode }) {
         triggerSimulationTick,
         missions,
         activeMission,
-        loadMissions
+        loadMissions,
+        currentProvider,
+        currentModel,
+        activeRequests,
+        queueSize,
+        streamingStatus,
+        tokenUsage,
+        estimatedCost,
+        providerHealth
       }}
     >
       {children}
