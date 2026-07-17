@@ -1,8 +1,8 @@
 import { ProviderFactory } from "../providers/ProviderFactory";
 import { FEATURE_FLAGS } from "../../config";
-import { getPrompt } from "../../prompts";
 import { logger } from "../../services/logging/logger";
 import { logAIExecution } from "./observability";
+import { contextBuilder } from "../context/contextBuilder";
 
 export interface ReviewResult {
   score: number;
@@ -28,8 +28,10 @@ export const reviewRunner = {
     }
 
     try {
-      const systemPrompt = getPrompt("reviewer");
-      const userPrompt = `Review this code:\n${codeSuggestions}`;
+      const systemPrompt = contextBuilder.buildSystemPrompt("reviewer");
+      const userPrompt = contextBuilder.buildUserPrompt(`Review this code:\n${codeSuggestions}`, {
+        workspace: "Engineering"
+      });
 
       const res = await provider.generate(userPrompt, systemPrompt, {
         temperature: 0.2
@@ -51,10 +53,12 @@ export const reviewRunner = {
       }
 
       const parsed = JSON.parse(cleaned);
+      const recs = parsed.recommendations || parsed.issues || ["Check configurations"];
+      const approvalText = parsed.approval !== undefined ? `Approval Status: ${parsed.approval}. ` : "";
       return {
         score: parsed.score || 90,
-        recommendations: parsed.recommendations || ["Check configurations"],
-        summary: parsed.summary || "Review finished successfully."
+        recommendations: recs,
+        summary: parsed.summary || `${approvalText}Review finished successfully.`
       };
     } catch (err: any) {
       await logAIExecution({

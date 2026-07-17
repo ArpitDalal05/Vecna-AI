@@ -46,11 +46,21 @@ export default function AISettingsPanel() {
         
         <div className="xl:col-span-2 p-6 rounded-2xl border border-violet/15 bg-[#09070A]/50 backdrop-blur-md flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <label className="font-mono text-[8px] tracking-[0.2em] text-zinc-500 uppercase">OpenRouter API Key</label>
+            <label className="font-mono text-[8px] tracking-[0.2em] text-zinc-500 uppercase">OpenRouter API Key (Primary)</label>
             <input
               type="password"
               value={config.openrouterApiKey}
               onChange={(e) => handleSave({ openrouterApiKey: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-lg bg-zinc-950 border border-zinc-900 text-xs text-white focus:outline-none focus:border-violet/60"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="font-mono text-[8px] tracking-[0.2em] text-zinc-500 uppercase">OpenRouter API Key (Backup)</label>
+            <input
+              type="password"
+              value={config.backupOpenrouterApiKey || ""}
+              onChange={(e) => handleSave({ backupOpenrouterApiKey: e.target.value })}
               className="w-full px-4 py-2.5 rounded-lg bg-zinc-950 border border-zinc-900 text-xs text-white focus:outline-none focus:border-violet/60"
             />
           </div>

@@ -12,6 +12,7 @@ import { organizationRepository } from "../repositories/organizationRepository";
 import { analyticsRepository } from "../repositories/analyticsRepository";
 import { settingsRepository } from "../repositories/settingsRepository";
 import { eventBus } from "../services/runtime/eventBus";
+import { healthService } from "../ai/health/healthService";
 import { hiveSimulation } from "../services/runtime/engines";
 import { SystemMetricRow } from "../mock/system";
 import { AgentRow } from "../mock/agents";
@@ -316,6 +317,33 @@ export function HiveStateProvider({ children }: { children: ReactNode }) {
 
     return () => {
       supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    const updateStats = () => {
+      const stats = healthService.getStats();
+      setCurrentProvider(stats.currentProvider);
+      setCurrentModel(stats.activeModel);
+      setActiveRequests(stats.activeRequests);
+      setQueueSize(stats.queueSize);
+      setTokenUsage(stats.tokenUsage);
+      setEstimatedCost(stats.tokenUsage * 0.00000035);
+      setProviderHealth(stats.providerHealth);
+    };
+
+    updateStats();
+    
+    eventBus.on("AI_REQUEST_COMPLETED", updateStats);
+    eventBus.on("AI_REQUEST_FAILED", updateStats);
+    eventBus.on("AI_REQUEST_STARTED", updateStats);
+
+    const timer = setInterval(updateStats, 5000);
+    return () => {
+      clearInterval(timer);
+      eventBus.off("AI_REQUEST_COMPLETED", updateStats);
+      eventBus.off("AI_REQUEST_FAILED", updateStats);
+      eventBus.off("AI_REQUEST_STARTED", updateStats);
     };
   }, []);
 

@@ -11,18 +11,22 @@ export interface AILogParams {
   completionTokens: number;
   latencyMs: number;
   cost?: number;
+  retryCount?: number;
+  executionDuration?: number;
   status: "SUCCESS" | "WARNING" | "FAILURE";
 }
 
 export async function logAIExecution(params: AILogParams) {
   const totalTokens = params.promptTokens + params.completionTokens;
   const estimatedCost = params.cost ?? (params.promptTokens * 0.00000015 + params.completionTokens * 0.0000006);
+  const retryCount = params.retryCount ?? 0;
+  const duration = params.executionDuration ?? params.latencyMs;
 
   if (FEATURE_FLAGS.USE_MOCK_DATA) {
     logger.info(
       "AI_OBSERVABILITY",
       `EXECUTION_${params.status}`,
-      `Agent ${params.agentId} executed ${params.model} via ${params.provider} in ${params.latencyMs}ms. Tokens: ${totalTokens}. Cost: $${estimatedCost.toFixed(6)}`,
+      `Agent ${params.agentId} executed ${params.model} via ${params.provider} in ${duration}ms. Retries: ${retryCount}. Tokens: ${totalTokens}. Cost: $${estimatedCost.toFixed(6)}`,
       {
         provider: params.provider,
         model: params.model,
@@ -30,6 +34,8 @@ export async function logAIExecution(params: AILogParams) {
         completionTokens: params.completionTokens,
         totalTokens,
         latencyMs: params.latencyMs,
+        executionDuration: duration,
+        retryCount,
         estimatedCost,
         missionId: params.missionId
       }
@@ -49,6 +55,8 @@ export async function logAIExecution(params: AILogParams) {
           completion_tokens: params.completionTokens,
           total_tokens: totalTokens,
           latency_ms: params.latencyMs,
+          execution_duration: duration,
+          retry_count: retryCount,
           estimated_cost: estimatedCost,
           mission_id: params.missionId
         }
@@ -58,7 +66,7 @@ export async function logAIExecution(params: AILogParams) {
       logger.info(
         "AI_OBSERVABILITY",
         `EXECUTION_${params.status}`,
-        `Agent ${params.agentId} executed ${params.model} via ${params.provider} in ${params.latencyMs}ms. Tokens: ${totalTokens}. Cost: $${estimatedCost.toFixed(6)}`,
+        `Agent ${params.agentId} executed ${params.model} via ${params.provider} in ${duration}ms. Retries: ${retryCount}. Tokens: ${totalTokens}. Cost: $${estimatedCost.toFixed(6)}`,
         {
           provider: params.provider,
           model: params.model,
@@ -66,6 +74,8 @@ export async function logAIExecution(params: AILogParams) {
           completionTokens: params.completionTokens,
           totalTokens,
           latencyMs: params.latencyMs,
+          executionDuration: duration,
+          retryCount,
           estimatedCost,
           missionId: params.missionId
         }

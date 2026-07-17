@@ -1,8 +1,8 @@
 import { ProviderFactory } from "../providers/ProviderFactory";
 import { FEATURE_FLAGS } from "../../config";
-import { getPrompt } from "../../prompts";
 import { logger } from "../../services/logging/logger";
 import { logAIExecution } from "./observability";
+import { contextBuilder } from "../context/contextBuilder";
 
 export interface AgentResult {
   plan: string;
@@ -28,8 +28,10 @@ export const agentRunner = {
     }
 
     try {
-      const systemPrompt = getPrompt("backend");
-      const userPrompt = `Generate implementation plan, code suggestions, and architecture guidance for: "${taskTitle}"`;
+      const systemPrompt = contextBuilder.buildSystemPrompt("backend");
+      const userPrompt = contextBuilder.buildUserPrompt(`Generate implementation plan, code suggestions, and architecture guidance for: "${taskTitle}"`, {
+        workspace: "Engineering"
+      });
 
       const res = await provider.generate(userPrompt, systemPrompt, {
         temperature: 0.7
