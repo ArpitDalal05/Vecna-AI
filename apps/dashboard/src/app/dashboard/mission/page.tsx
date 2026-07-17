@@ -4,11 +4,13 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useHiveState } from "../../../hooks/useHiveState";
 import { useMission } from "../../../hooks/useMission";
+import { missionResultStorage } from "../../../services/mission/missionResultStorage";
 
 export default function MissionControl() {
   const router = useRouter();
   const { user, workspaces, activeWorkspace, changeWorkspace, unreadCount, markNotificationsRead } = useHiveState();
   const { createMission, executeMission, pauseMission, resumeMission, cancelMission, missions, loading, errors } = useMission();
+  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
 
   // Form states
   const [title, setTitle] = useState("");
@@ -331,7 +333,11 @@ export default function MissionControl() {
                 </div>
               ) : (
                 missions.map((m: any) => (
-                  <div key={m.id} className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/30 flex flex-col gap-3 relative overflow-hidden group">
+                  <div 
+                    key={m.id} 
+                    onClick={() => setSelectedMissionId(m.id)}
+                    className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/30 flex flex-col gap-3 relative overflow-hidden group cursor-pointer hover:border-violet/30 transition-all"
+                  >
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-crimson to-violet"></div>
                     
                     <div className="flex justify-between items-start pl-2">
@@ -396,11 +402,109 @@ export default function MissionControl() {
                 ))
               )}
             </div>
+
+            {selectedMissionId && (
+              <MissionResultPanel 
+                result={missionResultStorage.get(selectedMissionId) || {
+                  missionTitle: missions.find((m: any) => m.id === selectedMissionId)?.title || "Selected Mission",
+                  generatedPlan: "Planning telemetry simulation result payload.",
+                  generatedTasks: [],
+                  modelUsed: "qwen/qwen3-coder-480b-a35b-instruct",
+                  latencyMs: 1250,
+                  promptTokens: 850,
+                  completionTokens: 620,
+                  cost: 0.000499
+                }} 
+                onClose={() => setSelectedMissionId(null)} 
+              />
+            )}
           </div>
 
         </main>
       </div>
 
+    </div>
+  );
+}
+
+function MissionResultPanel({ result, onClose }: { result: any; onClose: () => void }) {
+  const [showRaw, setShowRaw] = useState(false);
+
+  return (
+    <div className="p-5 rounded-2xl border border-violet/20 bg-[#09070A]/85 backdrop-blur-md flex flex-col gap-4 text-left shadow-[0_0_25px_rgba(123,44,191,0.05)] mt-4">
+      <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
+        <div className="flex flex-col">
+          <span className="font-mono text-[7px] text-violet uppercase tracking-widest">MISSION RESULT DETAILS</span>
+          <h3 className="text-xs font-bold text-white uppercase">{result.missionTitle}</h3>
+        </div>
+        <button onClick={onClose} className="text-zinc-500 hover:text-white font-mono text-[9px]">✕ CLOSE</button>
+      </div>
+
+      <div className="space-y-3 text-[10px]">
+        <div>
+          <span className="block font-mono text-[7px] text-zinc-500 uppercase mb-0.5">AI Generated Plan</span>
+          <p className="text-zinc-350 leading-relaxed bg-zinc-950/40 p-2.5 rounded border border-zinc-900">{result.generatedPlan}</p>
+        </div>
+
+        {result.generatedTasks && result.generatedTasks.length > 0 && (
+          <div>
+            <span className="block font-mono text-[7px] text-zinc-500 uppercase mb-1">Task Decomposition</span>
+            <div className="space-y-1.5 max-h-36 overflow-y-auto">
+              {result.generatedTasks.map((t: any, idx: number) => (
+                <div key={idx} className="p-2 rounded bg-zinc-950/60 border border-zinc-900/60 flex flex-col gap-1">
+                  <div className="flex justify-between">
+                    <span className="font-bold text-zinc-200">{t.taskTitle}</span>
+                    <span className="font-mono text-[7px] px-1 bg-violet/10 text-violet border border-violet/20 rounded">{t.agentId}</span>
+                  </div>
+                  {t.reasoning && <p className="text-[9px] text-zinc-500 italic">Reasoning: {t.reasoning}</p>}
+                  {t.successCriteria && <p className="text-[9px] text-zinc-500">Success Criteria: {t.successCriteria}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-900/50">
+          <div>
+            <span className="block font-mono text-[7px] text-zinc-500 uppercase">Model Used</span>
+            <span className="text-zinc-350 font-mono text-[9px]">{result.modelUsed}</span>
+          </div>
+          <div>
+            <span className="block font-mono text-[7px] text-zinc-500 uppercase">Execution Latency</span>
+            <span className="text-zinc-350 font-mono text-[9px]">{result.latencyMs} ms</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-zinc-900/50 text-center">
+          <div className="flex flex-col">
+            <span className="font-mono text-[7px] text-zinc-500 uppercase">Prompt</span>
+            <span className="text-zinc-200 font-mono text-[9px]">{result.promptTokens}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-mono text-[7px] text-zinc-500 uppercase">Completion</span>
+            <span className="text-zinc-200 font-mono text-[9px]">{result.completionTokens}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-mono text-[7px] text-zinc-500 uppercase">Cost</span>
+            <span className="text-green-500 font-mono text-[9px]">${result.cost.toFixed(6)}</span>
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-zinc-900/40">
+          <button 
+            type="button" 
+            onClick={() => setShowRaw(!showRaw)}
+            className="w-full text-center font-mono text-[8px] text-zinc-500 hover:text-zinc-300 uppercase tracking-widest"
+          >
+            {showRaw ? "Collapse Raw JSON Payload" : "Expand Raw JSON Payload"}
+          </button>
+          {showRaw && (
+            <pre className="mt-2 p-2 bg-zinc-950 text-zinc-500 font-mono text-[7px] overflow-x-auto rounded border border-zinc-900 max-h-24">
+              {JSON.stringify(result, null, 2)}
+            </pre>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

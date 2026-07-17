@@ -28,7 +28,7 @@ export class ProviderFactory {
       return new GeminiProvider(geminiKey);
     }
 
-    return null;
+    throw new Error("No API key credentials configured. Please add your OpenRouter Key in the AI Settings dashboard tab.");
   }
 }
 export default ProviderFactory;

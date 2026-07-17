@@ -80,11 +80,19 @@ export class OpenRouterProvider implements AIProvider {
             ? (config.openrouterApiKey || this.apiKey)
             : (config.backupOpenrouterApiKey || config.openrouterApiKey || this.apiKey);
 
+          if (!activeKey) {
+            console.error("Vecna OS API Error: OPENROUTER_API_KEY environment variable is not defined or configured.");
+            throw new Error("Missing OpenRouter API Key credentials. Configure your key in AI Settings.");
+          }
+
+          console.log("[DEBUG] OpenRouter Request Sent for model:", model);
           const response = await fetch(`${this.baseUrl}/chat/completions`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${activeKey}`,
+              "HTTP-Referer": "https://vecna-ai.local",
+              "X-Title": "Vecna AI Swarm"
             },
             body: JSON.stringify({
               model,
@@ -96,6 +104,7 @@ export class OpenRouterProvider implements AIProvider {
           });
 
           clearTimeout(timeoutId);
+          console.log("[DEBUG] Response Received from OpenRouter. Status:", response.status);
 
           if (response.status === 429 || response.status === 500 || response.status === 502 || response.status === 503 || response.status === 504) {
             if (config.backupOpenrouterApiKey) {
