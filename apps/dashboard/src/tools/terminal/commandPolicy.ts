@@ -8,12 +8,12 @@ export const commandPolicy = {
     "pnpm.cmd",
     "node",
     "node.exe",
-    "npx",
-    "npx.cmd",
     "git",
     "git.exe",
-    "python",
-    "python.exe",
+    "tsc",
+    "tsc.cmd",
+    "jest",
+    "vitest",
     "echo",
     "dir",
     "ls"
@@ -29,7 +29,21 @@ export const commandPolicy = {
     "rm -rf /",
     "rm -rf c:",
     "del /s /q c:",
-    "rmdir /s /q c:"
+    "rmdir /s /q c:",
+    "powershell",
+    "pwsh",
+    "cmd.exe /c",
+    "cmd /c",
+    "bash -c",
+    "sh -c",
+    "npm exec"
+  ],
+
+  forbiddenArgPatterns: [
+    /node\s+(-e|--eval|-p|--print)/i,
+    /python\s+(-c|-m)/i,
+    /npm\s+exec/i,
+    /npx\s+(?!tsc|jest|vitest|prettier|eslint)/i
   ],
 
   isCommandAllowed(commandString: string, requestedCwd?: string): { allowed: boolean; reason?: string; safeCwd: string } {
@@ -41,7 +55,13 @@ export const commandPolicy = {
     const lower = trimmed.toLowerCase();
     for (const forbidden of this.forbiddenSubstrings) {
       if (lower.includes(forbidden)) {
-        return { allowed: false, reason: `Command contains forbidden destructive instruction "${forbidden}".`, safeCwd: "" };
+        return { allowed: false, reason: `Command contains forbidden destructive or escape instruction "${forbidden}".`, safeCwd: "" };
+      }
+    }
+
+    for (const pattern of this.forbiddenArgPatterns) {
+      if (pattern.test(trimmed)) {
+        return { allowed: false, reason: `Command matches forbidden interpreter escape argument pattern "${pattern.source}".`, safeCwd: "" };
       }
     }
 

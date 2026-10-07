@@ -196,6 +196,6 @@ export interface CommandExecutionAudit {
   stdout?: string;
   stderr?: string;
   duration?: number;
-  status: "RUNNING" | "COMPLETED" | "FAILED" | "BLOCKED" | "PENDING_APPROVAL";
+  status: "RUNNING" | "COMPLETED" | "SUCCESS" | "FAILED" | "BLOCKED" | "PENDING_APPROVAL";
   timestamp: string;
 }

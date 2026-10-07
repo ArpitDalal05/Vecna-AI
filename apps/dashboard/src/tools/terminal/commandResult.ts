@@ -7,8 +7,9 @@ export interface CommandRunResult {
   exitCode: number;
   stdout: string;
   stderr: string;
+  duration: number;
   durationMs: number;
-  status: "COMPLETED" | "FAILED" | "BLOCKED" | "PENDING_APPROVAL";
+  status: "SUCCESS" | "FAILED" | "BLOCKED" | "PENDING_APPROVAL";
   audit: CommandExecutionAudit;
 }
 

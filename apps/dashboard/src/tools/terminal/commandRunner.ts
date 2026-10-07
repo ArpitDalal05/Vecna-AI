@@ -53,6 +53,7 @@ export const commandRunner = {
         exitCode: 1,
         stdout: "",
         stderr: policyCheck.reason || "Blocked by security policy.",
+        duration: 0,
         durationMs: 0,
         status: "BLOCKED",
         audit: blockedAudit
@@ -79,6 +80,7 @@ export const commandRunner = {
         exitCode: 0,
         stdout: "",
         stderr: "Command pending human approval in Approval Required mode.",
+        duration: 0,
         durationMs: 0,
         status: "PENDING_APPROVAL",
         audit: approvalAudit
@@ -100,7 +102,7 @@ export const commandRunner = {
         stdout: `[Mock stdout response for: ${command}]`,
         stderr: "",
         duration: 150,
-        status: "COMPLETED",
+        status: "SUCCESS",
         timestamp: now
       };
       recordCommandAudit(mockAudit);
@@ -111,8 +113,9 @@ export const commandRunner = {
         exitCode: 0,
         stdout: `[Mock stdout response for: ${command}]`,
         stderr: "",
+        duration: 150,
         durationMs: 150,
-        status: "COMPLETED",
+        status: "SUCCESS",
         audit: mockAudit
       };
     }
@@ -130,7 +133,7 @@ export const commandRunner = {
         async (error: any, stdout: string, stderr: string) => {
           const durationMs = Date.now() - startTime;
           const exitCode = error ? (error.code ?? 1) : 0;
-          const status = exitCode === 0 ? "COMPLETED" : "FAILED";
+          const status = exitCode === 0 ? "SUCCESS" : "FAILED";
 
           const auditRecord: CommandExecutionAudit = {
             id: `cmd_${Math.random().toString(36).substring(2, 9)}`,
@@ -178,6 +181,7 @@ export const commandRunner = {
             exitCode,
             stdout: stdout || "",
             stderr: stderr || "",
+            duration: durationMs,
             durationMs,
             status,
             audit: auditRecord
