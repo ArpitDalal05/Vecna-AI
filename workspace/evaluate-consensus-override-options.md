@@ -1,5 +1,5 @@
 # evaluate-consensus-override-options.md
 
-Generated payload for task: Task: Evaluate consensus override options. Objective: Build a small Todo API using Node.js, TypeScript and Express.. Target File: evaluate-consensus-override-options.md. Generate full working source code without dummy placeholders.
+Generated payload for task: Task: Evaluate consensus override options. Mission: Build a Todo REST API using Node.js + TypeScript + Express + tests.. Target File: evaluate-consensus-override-options.md. Generate production source code.
 
 * Status: Completed via simulated Swarm mode.

@@ -130,7 +130,7 @@ export interface Mission {
   completedTasks: number;
   assignedAgents: string[];
   owner?: string;
-  currentPhase?: "MISSION_CREATED" | "PLANNING" | "PLAN_READY" | "EXECUTING" | "VERIFYING" | "COMPLETED" | "EXECUTION_FAILED" | "BLOCKED" | "CANCELLED";
+  currentPhase?: "MISSION_CREATED" | "PLANNING" | "PLAN_READY" | "EXECUTING" | "REVIEWING" | "VERIFYING" | "COMPLETED" | "EXECUTION_FAILED" | "BLOCKED" | "CANCELLED";
   currentTask?: string;
   executionProgress?: number;
   totalTasks?: number;
@@ -156,6 +156,8 @@ export interface MissionTask {
   reasoning?: string;
   successCriteria?: string;
   targetArtifact?: string;
+  requiredCapabilities?: AgentCapability[];
+  assignedAgentId?: string;
   startedAt?: string;
   completedAt?: string;
   error?: string;
@@ -167,7 +169,51 @@ export interface ExecutionLogEntry {
   missionId: string;
   taskId?: string;
   agent?: string;
-  event: "MISSION_STARTED" | "PLAN_CREATED" | "TASK_STARTED" | "LLM_REQUEST" | "LLM_RESPONSE" | "FILE_CREATED" | "FILE_UPDATED" | "FILE_DELETED" | "COMMAND_STARTED" | "COMMAND_COMPLETED" | "COMMAND_FAILED" | "ARTIFACT_CREATED" | "VALIDATION_STARTED" | "VALIDATION_FAILED" | "VALIDATION_PASSED" | "MISSION_COMPLETED";
+  event:
+    | "MISSION_STARTED"
+    | "TEAM_FORMED"
+    | "PLAN_CREATED"
+    | "TASK_CREATED"
+    | "TASK_READY"
+    | "TASK_ASSIGNED"
+    | "TASK_STARTED"
+    | "AGENT_ACTIVATED"
+    | "AGENT_STARTED"
+    | "AGENT_COMPLETED"
+    | "PARALLEL_BATCH_STARTED"
+    | "PARALLEL_BATCH_COMPLETED"
+    | "FILE_LOCK_ACQUIRED"
+    | "FILE_LOCK_RELEASED"
+    | "INTEGRATION_STARTED"
+    | "INTEGRATION_COMPLETED"
+    | "REVIEW_STARTED"
+    | "CRITIC_FINDING"
+    | "AUDIT_FINDING"
+    | "QA_FINDING"
+    | "SECURITY_FINDING"
+    | "REWORK_TASK_CREATED"
+    | "CODER_REACTIVATED"
+    | "REWORK_COMPLETED"
+    | "DEBATE_STARTED"
+    | "DEBATE_COMPLETED"
+    | "SENIOR_REVIEW_STARTED"
+    | "SENIOR_APPROVED"
+    | "SENIOR_REJECTED"
+    | "LLM_REQUEST"
+    | "LLM_RESPONSE"
+    | "FILE_CREATED"
+    | "FILE_UPDATED"
+    | "FILE_DELETED"
+    | "COMMAND_STARTED"
+    | "COMMAND_COMPLETED"
+    | "COMMAND_FAILED"
+    | "ARTIFACT_CREATED"
+    | "VALIDATION_STARTED"
+    | "VALIDATION_FAILED"
+    | "VALIDATION_PASSED"
+    | "MISSION_COMPLETED"
+    | "MISSION_FAILED"
+    | "MISSION_BLOCKED";
   metadata?: Record<string, any>;
 }
 
@@ -197,5 +243,82 @@ export interface CommandExecutionAudit {
   stderr?: string;
   duration?: number;
   status: "RUNNING" | "COMPLETED" | "SUCCESS" | "FAILED" | "BLOCKED" | "PENDING_APPROVAL";
+  timestamp: string;
+}
+
+export type AgentRole =
+  | "CODER"
+  | "CODER_BACKEND"
+  | "CODER_FRONTEND"
+  | "CODER_DATABASE"
+  | "CODER_INTEGRATION"
+  | "CODER_TEST"
+  | "RESEARCHER"
+  | "ARCHITECT"
+  | "CRITIC"
+  | "AUDITOR"
+  | "SECURITY_REVIEWER"
+  | "QA_REVIEWER"
+  | "SENIOR_REVIEWER";
+
+export type AgentCapability =
+  | "BACKEND"
+  | "FRONTEND"
+  | "DATABASE"
+  | "INTEGRATION"
+  | "TESTING"
+  | "SECURITY"
+  | "ARCHITECT"
+  | "AUDIT"
+  | "CRITICISM";
+
+export interface AgentMember {
+  id: string;
+  name: string;
+  role: AgentRole;
+  capabilities: AgentCapability[];
+  model: string;
+  status: "IDLE" | "BUSY" | "OFFLINE";
+  workload: number;
+  currentTaskId?: string;
+  missionId?: string;
+  permissions: string[];
+  workspaceScope: string;
+}
+
+export interface ReviewFinding {
+  findingId: string;
+  reviewerRole: AgentRole;
+  taskId?: string;
+  artifactId?: string;
+  severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO";
+  category: string;
+  description: string;
+  evidence: string;
+  affectedFiles: string[];
+  recommendedAction: string;
+  confidence: number;
+  blocking: boolean;
+}
+
+export interface ReviewConsolidation {
+  missionId: string;
+  criticFindings: ReviewFinding[];
+  auditFindings: ReviewFinding[];
+  qaFindings: ReviewFinding[];
+  securityFindings: ReviewFinding[];
+  blockingIssues: number;
+  nonBlockingIssues: number;
+  reworkTasksCreated: number;
+  approvalEligible: boolean;
+  timestamp: string;
+}
+
+export interface SeniorDecisionRecord {
+  id: string;
+  missionId: string;
+  decision: "APPROVE" | "REJECT" | "REQUEST_REWORK";
+  reasoning: string;
+  approverRole: "SENIOR_REVIEWER";
   timestamp: string;
 }
