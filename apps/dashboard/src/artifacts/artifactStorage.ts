@@ -28,6 +28,10 @@ export class ArtifactStorage {
     }
     return all;
   }
+
+  listByMission(missionId: string): Artifact[] {
+    return this.list().filter(a => a.missionId === missionId);
+  }
 }
 
 export const artifactStorage = new ArtifactStorage();

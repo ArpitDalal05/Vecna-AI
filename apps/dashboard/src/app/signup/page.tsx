@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FEATURE_FLAGS } from "../../config";
 import { createClient } from "../../lib/supabase/client";
 
 export default function SignUp() {
@@ -19,6 +20,13 @@ export default function SignUp() {
     e.preventDefault();
     setLoading(true);
     setErrorMessage(null);
+
+    if (FEATURE_FLAGS.USE_MOCK_DATA) {
+      router.push("/dashboard");
+      router.refresh();
+      setLoading(false);
+      return;
+    }
 
     try {
       const origin = window.location.origin;

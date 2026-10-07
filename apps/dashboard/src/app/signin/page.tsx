@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { FEATURE_FLAGS } from "../../config";
 import { createClient } from "../../lib/supabase/client";
 
 function SignInContent() {
@@ -25,6 +26,13 @@ function SignInContent() {
     setLoading(true);
     setErrorMessage(null);
 
+    if (FEATURE_FLAGS.USE_MOCK_DATA) {
+      router.push("/dashboard");
+      router.refresh();
+      setLoading(false);
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -47,6 +55,14 @@ function SignInContent() {
   const handleOAuthLogin = async (provider: "google" | "github") => {
     setLoading(true);
     setErrorMessage(null);
+
+    if (FEATURE_FLAGS.USE_MOCK_DATA) {
+      router.push("/dashboard");
+      router.refresh();
+      setLoading(false);
+      return;
+    }
+
     try {
       const origin = window.location.origin;
       const { error } = await supabase.auth.signInWithOAuth({

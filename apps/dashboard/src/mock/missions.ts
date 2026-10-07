@@ -31,10 +31,10 @@ export let missionsTable: Mission[] = [
   }
 ];
 
-export function insertMissionTable(mission: Omit<Mission, "id" | "createdAt" | "updatedAt">): Mission {
+export function insertMissionTable(mission: Omit<Mission, "id" | "createdAt" | "updatedAt"> & { id?: string }): Mission {
   const newMission: Mission = {
     ...mission,
-    id: "M" + (missionsTable.length + 1),
+    id: mission.id || ("M" + (missionsTable.length + 1)),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };

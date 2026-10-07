@@ -130,4 +130,72 @@ export interface Mission {
   completedTasks: number;
   assignedAgents: string[];
   owner?: string;
+  currentPhase?: "MISSION_CREATED" | "PLANNING" | "PLAN_READY" | "EXECUTING" | "VERIFYING" | "COMPLETED" | "EXECUTION_FAILED" | "BLOCKED" | "CANCELLED";
+  currentTask?: string;
+  executionProgress?: number;
+  totalTasks?: number;
+  failedTasks?: number;
+  startedAt?: string;
+  completedAt?: string;
+  lastActivityAt?: string;
+  executionError?: string;
+  resultSummary?: string;
+}
+
+export interface MissionTask {
+  id: string;
+  missionId: string;
+  agentId: string;
+  taskTitle: string;
+  description?: string;
+  status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED" | "BLOCKED" | "PENDING_APPROVAL";
+  priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  progress: number;
+  dependencies?: string[];
+  estimatedDuration?: string;
+  reasoning?: string;
+  successCriteria?: string;
+  targetArtifact?: string;
+  startedAt?: string;
+  completedAt?: string;
+  error?: string;
+}
+
+export interface ExecutionLogEntry {
+  id: string;
+  timestamp: string;
+  missionId: string;
+  taskId?: string;
+  agent?: string;
+  event: "MISSION_STARTED" | "PLAN_CREATED" | "TASK_STARTED" | "LLM_REQUEST" | "LLM_RESPONSE" | "FILE_CREATED" | "FILE_UPDATED" | "FILE_DELETED" | "COMMAND_STARTED" | "COMMAND_COMPLETED" | "COMMAND_FAILED" | "ARTIFACT_CREATED" | "VALIDATION_STARTED" | "VALIDATION_FAILED" | "VALIDATION_PASSED" | "MISSION_COMPLETED";
+  metadata?: Record<string, any>;
+}
+
+export interface FileOperationAudit {
+  id: string;
+  missionId: string;
+  taskId?: string;
+  filePath: string;
+  operation: "CREATE" | "READ" | "UPDATE" | "RENAME" | "DELETE";
+  previousVersion?: string;
+  newVersion?: string;
+  timestamp: string;
+  agent: string;
+  result: "SUCCESS" | "FAILED" | "PENDING_APPROVAL";
+}
+
+export interface CommandExecutionAudit {
+  id: string;
+  missionId: string;
+  taskId?: string;
+  command: string;
+  arguments: string[];
+  workingDirectory: string;
+  timeout: number;
+  exitCode?: number;
+  stdout?: string;
+  stderr?: string;
+  duration?: number;
+  status: "RUNNING" | "COMPLETED" | "FAILED" | "BLOCKED" | "PENDING_APPROVAL";
+  timestamp: string;
 }

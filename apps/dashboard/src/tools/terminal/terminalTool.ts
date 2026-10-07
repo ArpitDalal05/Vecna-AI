@@ -1,5 +1,6 @@
 import { Tool, ToolMetadata } from "../toolTypes";
-import { sandbox } from "../security/sandbox";
+import { commandRunner } from "./commandRunner";
+import { commandPolicy } from "./commandPolicy";
 import { logger } from "../../services/logging/logger";
 
 export class TerminalTool implements Tool {
@@ -18,23 +19,29 @@ export class TerminalTool implements Tool {
 
   async execute(args: any): Promise<any> {
     const cmd = args.command;
-    const sanitization = sandbox.sanitizeCommand(cmd);
+    const cwd = args.workingDirectory || args.cwd;
+    const missionId = args.missionId || "standalone";
+    const taskId = args.taskId;
+    const requiresApproval = args.requiresApproval || false;
 
-    if (!sanitization.approved) {
-      throw new Error(`Command "${cmd}" is blocked inside the terminal sandbox.`);
+    const check = commandPolicy.isCommandAllowed(cmd, cwd);
+    if (!check.allowed) {
+      throw new Error(`Command "${cmd}" blocked by security policy: ${check.reason}`);
     }
 
-    logger.info("TERMINAL_TOOL", "EXECUTE_CMD", `Command execution approved: ${cmd}`);
-
-    return {
-      stdout: `[Mock stdout response for sandbox terminal execution of: ${cmd}]`,
-      stderr: "",
-      exitCode: 0
-    };
+    logger.info("TERMINAL_TOOL", "EXECUTE_CMD", `Executing terminal command: ${cmd}`);
+    return await commandRunner.executeCommand({
+      command: cmd,
+      missionId,
+      taskId,
+      workingDirectory: cwd,
+      requiresApproval
+    });
   }
 
   async health(): Promise<{ status: "HEALTHY" | "UNHEALTHY"; error: string | null }> {
     return { status: "HEALTHY", error: null };
   }
 }
+
 export default TerminalTool;

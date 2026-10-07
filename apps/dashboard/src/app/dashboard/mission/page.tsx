@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useHiveState } from "../../../hooks/useHiveState";
 import { useMission } from "../../../hooks/useMission";
 import { missionResultStorage } from "../../../services/mission/missionResultStorage";
+import { artifactStorage } from "../../../artifacts/artifactStorage";
 
 export default function MissionControl() {
   const router = useRouter();
@@ -487,6 +488,25 @@ function MissionResultPanel({ result, onClose }: { result: any; onClose: () => v
           <div className="flex flex-col">
             <span className="font-mono text-[7px] text-zinc-500 uppercase">Cost</span>
             <span className="text-green-500 font-mono text-[9px]">${result.cost.toFixed(6)}</span>
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-zinc-900/50">
+          <span className="block font-mono text-[7px] text-zinc-500 uppercase mb-1">Generated Artifacts</span>
+          <div className="space-y-1.5 max-h-32 overflow-y-auto">
+            {artifactStorage.listByMission(result.missionId || "").length === 0 ? (
+              <span className="text-[9px] font-mono text-zinc-600">No artifacts generated for this mission yet.</span>
+            ) : (
+              artifactStorage.listByMission(result.missionId || "").map((art) => (
+                <div key={art.id} className="p-2 rounded bg-zinc-950 border border-zinc-900 flex justify-between items-center text-[9px] font-mono">
+                  <div className="flex flex-col">
+                    <span className="text-zinc-200 font-bold">{art.name} <span className="text-zinc-500 text-[8px]">(v{art.version})</span></span>
+                    <span className="text-zinc-500 text-[7px] truncate max-w-[200px]">{art.path}</span>
+                  </div>
+                  <span className="text-cyan border border-cyan/30 px-1 py-0.5 rounded text-[7px] uppercase font-bold">{art.type}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

@@ -7,6 +7,35 @@ import { createClient } from "../lib/supabase/client";
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+function mapMissionRow(data: any): Mission {
+  return {
+    id: data.id,
+    title: data.title,
+    goal: data.goal,
+    description: data.description || "",
+    priority: data.priority,
+    workspace: data.workspace,
+    executionMode: data.execution_mode || data.executionMode,
+    status: data.status,
+    createdAt: data.created_at || data.createdAt,
+    updatedAt: data.updated_at || data.updatedAt,
+    estimatedTasks: Number(data.estimated_tasks || data.estimatedTasks || 0),
+    completedTasks: Number(data.completed_tasks || data.completedTasks || 0),
+    assignedAgents: data.assigned_agents || data.assignedAgents || [],
+    owner: data.owner,
+    currentPhase: data.current_phase || data.currentPhase,
+    currentTask: data.current_task || data.currentTask,
+    executionProgress: Number(data.execution_progress ?? data.executionProgress ?? 0),
+    totalTasks: Number(data.total_tasks ?? data.totalTasks ?? 0),
+    failedTasks: Number(data.failed_tasks ?? data.failedTasks ?? 0),
+    startedAt: data.started_at || data.startedAt,
+    completedAt: data.completed_at || data.completedAt,
+    lastActivityAt: data.last_activity_at || data.lastActivityAt,
+    executionError: data.execution_error || data.executionError,
+    resultSummary: data.result_summary || data.resultSummary
+  };
+}
+
 export class MissionRepository implements IMissionRepository {
   async createMission(mission: Omit<Mission, "id" | "createdAt" | "updatedAt">): Promise<RepoResponse<Mission>> {
     await delay(150);
@@ -32,28 +61,22 @@ export class MissionRepository implements IMissionRepository {
           estimated_tasks: mission.estimatedTasks,
           completed_tasks: mission.completedTasks,
           assigned_agents: mission.assignedAgents,
-          owner: mission.owner
+          owner: mission.owner,
+          current_phase: mission.currentPhase,
+          current_task: mission.currentTask,
+          execution_progress: mission.executionProgress,
+          total_tasks: mission.totalTasks,
+          failed_tasks: mission.failedTasks,
+          started_at: mission.startedAt,
+          completed_at: mission.completedAt,
+          last_activity_at: mission.lastActivityAt,
+          execution_error: mission.executionError,
+          result_summary: mission.resultSummary
         }).select().single();
 
         if (error) throw new Error(error.message);
 
-        const mapped: Mission = {
-          id: data.id,
-          title: data.title,
-          goal: data.goal,
-          description: data.description || "",
-          priority: data.priority,
-          workspace: data.workspace,
-          executionMode: data.execution_mode,
-          status: data.status,
-          createdAt: data.created_at,
-          updatedAt: data.updated_at,
-          estimatedTasks: Number(data.estimated_tasks),
-          completedTasks: Number(data.completed_tasks),
-          assignedAgents: data.assigned_agents || [],
-          owner: data.owner
-        };
-
+        const mapped = mapMissionRow(data);
         cacheManager.invalidate("missions_list");
         return { data: mapped, error: null, loading: false };
       } catch (err: any) {
@@ -72,6 +95,7 @@ export class MissionRepository implements IMissionRepository {
         if (!data) throw new Error("Mission not found");
         cacheManager.invalidate("missions_list");
         cacheManager.invalidate(`mission_${id}`);
+        cacheManager.set(`mission_${id}`, data);
         return { data, error: null, loading: false };
       } catch (err: any) {
         return { data: null, error: err, loading: false };
@@ -91,6 +115,16 @@ export class MissionRepository implements IMissionRepository {
         if (updates.estimatedTasks !== undefined) dbUpdates.estimated_tasks = updates.estimatedTasks;
         if (updates.completedTasks !== undefined) dbUpdates.completed_tasks = updates.completedTasks;
         if (updates.assignedAgents !== undefined) dbUpdates.assigned_agents = updates.assignedAgents;
+        if (updates.currentPhase !== undefined) dbUpdates.current_phase = updates.currentPhase;
+        if (updates.currentTask !== undefined) dbUpdates.current_task = updates.currentTask;
+        if (updates.executionProgress !== undefined) dbUpdates.execution_progress = updates.executionProgress;
+        if (updates.totalTasks !== undefined) dbUpdates.total_tasks = updates.totalTasks;
+        if (updates.failedTasks !== undefined) dbUpdates.failed_tasks = updates.failedTasks;
+        if (updates.startedAt !== undefined) dbUpdates.started_at = updates.startedAt;
+        if (updates.completedAt !== undefined) dbUpdates.completed_at = updates.completedAt;
+        if (updates.lastActivityAt !== undefined) dbUpdates.last_activity_at = updates.lastActivityAt;
+        if (updates.executionError !== undefined) dbUpdates.execution_error = updates.executionError;
+        if (updates.resultSummary !== undefined) dbUpdates.result_summary = updates.resultSummary;
 
         const { error } = await supabase.from("missions").update(dbUpdates).eq("id", id);
         if (error) throw new Error(error.message);
@@ -103,6 +137,7 @@ export class MissionRepository implements IMissionRepository {
         console.warn("Supabase updateMission failed, falling back to mock:", err);
         const data = updateMissionTable(id, updates);
         if (!data) return { data: null, error: new Error("Mission not found"), loading: false };
+        cacheManager.set(`mission_${id}`, data);
         return { data, error: null, loading: false };
       }
     }
@@ -148,23 +183,7 @@ export class MissionRepository implements IMissionRepository {
         const { data, error } = await supabase.from("missions").select("*").eq("id", id).single();
         if (error) throw error;
 
-        const mapped: Mission = {
-          id: data.id,
-          title: data.title,
-          goal: data.goal,
-          description: data.description || "",
-          priority: data.priority,
-          workspace: data.workspace,
-          executionMode: data.execution_mode,
-          status: data.status,
-          createdAt: data.created_at,
-          updatedAt: data.updated_at,
-          estimatedTasks: Number(data.estimated_tasks),
-          completedTasks: Number(data.completed_tasks),
-          assignedAgents: data.assigned_agents || [],
-          owner: data.owner
-        };
-
+        const mapped = mapMissionRow(data);
         cacheManager.set(cacheKey, mapped);
         return { data: mapped, error: null, loading: false };
       } catch (err: any) {
@@ -192,23 +211,7 @@ export class MissionRepository implements IMissionRepository {
         const { data, error } = await supabase.from("missions").select("*");
         if (error) throw error;
 
-        const mapped: Mission[] = (data || []).map((row: any) => ({
-          id: row.id,
-          title: row.title,
-          goal: row.goal,
-          description: row.description || "",
-          priority: row.priority,
-          workspace: row.workspace,
-          executionMode: row.execution_mode,
-          status: row.status,
-          createdAt: row.created_at,
-          updatedAt: row.updated_at,
-          estimatedTasks: Number(row.estimated_tasks),
-          completedTasks: Number(row.completed_tasks),
-          assignedAgents: row.assigned_agents || [],
-          owner: row.owner
-        }));
-
+        const mapped: Mission[] = (data || []).map(mapMissionRow);
         cacheManager.set(cacheKey, mapped);
         return { data: mapped, error: null, loading: false };
       } catch (err: any) {
@@ -219,17 +222,17 @@ export class MissionRepository implements IMissionRepository {
   }
 
   async pauseMission(id: string): Promise<{ error: Error | null }> {
-    const res = await this.updateMission(id, { status: "PAUSED" });
+    const res = await this.updateMission(id, { status: "PAUSED", currentPhase: "BLOCKED" });
     return { error: res.error };
   }
 
   async resumeMission(id: string): Promise<{ error: Error | null }> {
-    const res = await this.updateMission(id, { status: "RUNNING" });
+    const res = await this.updateMission(id, { status: "RUNNING", currentPhase: "EXECUTING" });
     return { error: res.error };
   }
 
   async cancelMission(id: string): Promise<{ error: Error | null }> {
-    const res = await this.updateMission(id, { status: "CANCELLED" });
+    const res = await this.updateMission(id, { status: "CANCELLED", currentPhase: "CANCELLED" });
     return { error: res.error };
   }
 }

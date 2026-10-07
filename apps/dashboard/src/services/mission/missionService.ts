@@ -31,7 +31,8 @@ export const missionService = {
     eventBus.emit("MISSION_STARTED");
 
     await missionExecutor.execute(updatedRes.data);
-    return updatedRes.data;
+    const finalRes = await missionRepository.getMission(id);
+    return finalRes.data || updatedRes.data;
   },
 
   async pauseMission(id: string) {
