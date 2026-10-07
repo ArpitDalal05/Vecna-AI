@@ -374,7 +374,7 @@ export const autonomousExecutor = {
 
         // Execute Rework Repair
         try {
-          const targetFile = "package.json";
+          const targetFile = rework.targetArtifact || (rework.taskTitle.toLowerCase().includes("type") ? "src/types.ts" : "src/server.ts");
           const art = await artifactRunner.generateArtifact({
             missionId: mission.id,
             taskId: rework.id,

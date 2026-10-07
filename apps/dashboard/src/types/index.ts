@@ -54,6 +54,7 @@ export interface Assignment {
   progress: number;
   startedAt: string;
   completedAt?: string;
+  targetArtifact?: string;
 }
 
 export interface Review {

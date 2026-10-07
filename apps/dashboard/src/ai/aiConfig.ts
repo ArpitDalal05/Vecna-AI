@@ -56,7 +56,15 @@ export const aiConfigManager = {
       return baseConfig;
     }
     try {
-      return { ...baseConfig, ...JSON.parse(stored) };
+      const parsed = JSON.parse(stored);
+      return {
+        ...baseConfig,
+        ...parsed,
+        openrouterApiKey: parsed.openrouterApiKey || openrouterKey,
+        backupOpenrouterApiKey: parsed.backupOpenrouterApiKey || backupKey,
+        geminiApiKey: parsed.geminiApiKey || geminiKey,
+        useRealAi: parsed.useRealAi !== undefined ? parsed.useRealAi : true
+      };
     } catch {
       return baseConfig;
     }

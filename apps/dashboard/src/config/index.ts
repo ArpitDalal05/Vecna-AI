@@ -32,7 +32,7 @@ export const FEATURE_FLAGS = {
   ENABLE_DECISION_DEBATE: true,
   ENABLE_REALTIME_NOTIFICATIONS: true,
   USE_MOCK_DATA: process.env.NEXT_PUBLIC_USE_MOCK_DATA !== "false", // default to true (mock), set to false for Supabase!
-  USE_REAL_AI: process.env.NEXT_PUBLIC_USE_REAL_AI === "true",
+  USE_REAL_AI: process.env.NEXT_PUBLIC_USE_REAL_AI !== "false",
   ENABLE_STREAMING: process.env.NEXT_PUBLIC_ENABLE_STREAMING !== "false",
   ENABLE_AI_LOGGING: process.env.NEXT_PUBLIC_ENABLE_AI_LOGGING !== "false",
   ENABLE_PROVIDER_FALLBACK: process.env.NEXT_PUBLIC_ENABLE_PROVIDER_FALLBACK !== "false",
