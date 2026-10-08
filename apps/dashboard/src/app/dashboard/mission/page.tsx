@@ -395,7 +395,7 @@ export default function MissionControl() {
                       <div className="flex items-center gap-2 font-mono text-[8px] text-zinc-500">
                         <span>PROGRESS:</span>
                         <span className="text-white font-bold">
-                          {m.estimatedTasks > 0 ? Math.floor((m.completedTasks / m.estimatedTasks) * 100) : 0}%
+                          {m.status === "COMPLETED" ? 100 : (m.executionProgress !== undefined && m.executionProgress > 0 ? m.executionProgress : (m.estimatedTasks > 0 ? Math.floor((m.completedTasks / m.estimatedTasks) * 100) : 0))}%
                         </span>
                       </div>
                     </div>

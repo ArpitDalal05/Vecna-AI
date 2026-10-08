@@ -196,28 +196,27 @@ export class MissionRepository implements IMissionRepository {
   }
 
   async getAllMissions(): Promise<RepoResponse<Mission[]>> {
+    if (FEATURE_FLAGS.USE_MOCK_DATA) {
+      const data = [...missionsTable];
+      return { data, error: null, loading: false };
+    }
+
     const cacheKey = "missions_list";
     const cached = cacheManager.get<Mission[]>(cacheKey);
     if (cached) return { data: cached, error: null, loading: false };
 
     await delay(150);
-    if (FEATURE_FLAGS.USE_MOCK_DATA) {
-      const data = [...missionsTable];
-      cacheManager.set(cacheKey, data);
-      return { data, error: null, loading: false };
-    } else {
-      try {
-        const supabase = createClient();
-        const { data, error } = await supabase.from("missions").select("*");
-        if (error) throw error;
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("missions").select("*");
+      if (error) throw error;
 
-        const mapped: Mission[] = (data || []).map(mapMissionRow);
-        cacheManager.set(cacheKey, mapped);
-        return { data: mapped, error: null, loading: false };
-      } catch (err: any) {
-        console.warn("Supabase getAllMissions failed, falling back to mock:", err);
-        return { data: [...missionsTable], error: null, loading: false };
-      }
+      const mapped: Mission[] = (data || []).map(mapMissionRow);
+      cacheManager.set(cacheKey, mapped);
+      return { data: mapped, error: null, loading: false };
+    } catch (err: any) {
+      console.warn("Supabase getAllMissions failed, falling back to mock:", err);
+      return { data: [...missionsTable], error: null, loading: false };
     }
   }
 

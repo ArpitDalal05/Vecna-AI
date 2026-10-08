@@ -22,11 +22,12 @@ export let missionsTable: Mission[] = [
     priority: "CRITICAL",
     workspace: "Infrastructure",
     executionMode: "Autonomous",
-    status: "RUNNING",
+    status: "COMPLETED",
     createdAt: new Date(Date.now() - 1800000).toISOString(),
     updatedAt: new Date().toISOString(),
     estimatedTasks: 3,
-    completedTasks: 1,
+    completedTasks: 3,
+    executionProgress: 100,
     assignedAgents: ["Mem-04", "Decide-02"]
   }
 ];
