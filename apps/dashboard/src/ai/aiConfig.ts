@@ -38,19 +38,20 @@ const DEFAULT_CONFIG: AIConfig = {
 
 export const aiConfigManager = {
   getConfig(): AIConfig {
-    if (typeof window === "undefined") return DEFAULT_CONFIG;
-    const stored = localStorage.getItem("vecna_ai_config");
     const openrouterKey = process.env.OPENROUTER_API_KEY || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || "";
     const backupKey = process.env.BACKUP_OPENROUTER_API_KEY || process.env.NEXT_PUBLIC_BACKUP_OPENROUTER_API_KEY || "";
     const geminiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
 
-    const baseConfig = {
+    const baseConfig: AIConfig = {
       ...DEFAULT_CONFIG,
       openrouterApiKey: openrouterKey,
       backupOpenrouterApiKey: backupKey,
       geminiApiKey: geminiKey
     };
 
+    if (typeof window === "undefined") return baseConfig;
+
+    const stored = localStorage.getItem("vecna_ai_config");
     if (!stored) {
       localStorage.setItem("vecna_ai_config", JSON.stringify(baseConfig));
       return baseConfig;

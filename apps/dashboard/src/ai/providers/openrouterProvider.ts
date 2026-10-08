@@ -8,23 +8,25 @@ import { logger } from "../../services/logging/logger";
 const FALLBACK_CHAINS: Record<string, string[]> = {
   "qwen/qwen3-coder-480b-a35b-instruct": [
     "qwen/qwen3-coder-480b-a35b-instruct",
+    "poolside/laguna-s-2.1:free",
     "meta-llama/llama-3.3-70b-instruct",
-    "nousresearch/hermes-3-405b-instruct"
+    "dots-studio/dots-3-note-preview:free"
   ],
   "nousresearch/hermes-3-405b-instruct": [
     "nousresearch/hermes-3-405b-instruct",
-    "qwen/qwen3-coder-480b-a35b-instruct",
+    "dots-studio/dots-3-note-preview:free",
+    "poolside/laguna-s-2.1:free",
     "meta-llama/llama-3.3-70b-instruct"
   ],
   "meta-llama/llama-3.3-70b-instruct": [
     "meta-llama/llama-3.3-70b-instruct",
-    "qwen/qwen3-coder-480b-a35b-instruct",
-    "nousresearch/hermes-3-405b-instruct"
+    "poolside/laguna-s-2.1:free",
+    "dots-studio/dots-3-note-preview:free"
   ],
   "meta-llama/llama-3.2-3b-instruct": [
     "meta-llama/llama-3.2-3b-instruct",
-    "meta-llama/llama-3.3-70b-instruct",
-    "qwen/qwen3-coder-480b-a35b-instruct"
+    "poolside/laguna-xs-2.1:free",
+    "poolside/laguna-s-2.1:free"
   ]
 };
 
